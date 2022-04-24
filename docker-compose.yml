@@ -1,0 +1,50 @@
+version: "3.6"
+
+# Command: BIND_IP_ADDRESS="192.168.2.XXX" docker-compose -p pihole up -d
+
+services:
+
+  cloudflared:
+    container_name: cloudflared
+    restart: unless-stopped
+    image: cloudflare/cloudflared:latest
+    command: proxy-dns
+    environment:
+      - "TUNNEL_DNS_UPSTREAM=https://1.1.1.1/dns-query,https://1.0.0.1/dns-query"
+      - "TUNNEL_DNS_PORT=5053"
+      - "TUNNEL_DNS_ADDRESS=0.0.0.0"
+    networks:
+      internal:
+        ipv4_address: 172.30.9.2
+
+  pihole:
+    container_name: pihole
+    restart: unless-stopped
+    image: pihole/pihole:latest
+    ports:
+      - "${BIND_IP_ADDRESS}:53:53/udp"
+      - "80:80/tcp"
+    environment:
+      - "TZ=Europe/Berlin"
+      - "PIHOLE_DNS_=172.30.9.2#5053"
+      - "IPv6=false"
+      - "DNSMASQ_LISTENING=all"
+    volumes:
+      - '/opt/pihole/etc/pihole:/etc/pihole'
+      - '/opt/pihole/etc/dnsmasq.d:/etc/dnsmasq.d'
+    networks:
+      internal:
+        ipv4_address: 172.30.9.3
+      lan: 
+    depends_on:
+      - cloudflared
+
+networks:
+  
+  internal:
+    ipam:
+      config:
+        - subnet: 172.30.9.0/29
+
+  lan:
+    driver: bridge
