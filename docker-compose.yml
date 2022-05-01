@@ -5,9 +5,10 @@ version: "3.6"
 services:
 
   cloudflared:
+    build: cloudflared/
     container_name: cloudflared
     restart: unless-stopped
-    image: cloudflare/cloudflared:latest
+    #image: cloudflare/cloudflared:latest
     command: proxy-dns
     environment:
       - "TUNNEL_DNS_UPSTREAM=https://1.1.1.1/dns-query,https://1.0.0.1/dns-query"
@@ -35,12 +36,12 @@ services:
     networks:
       internal:
         ipv4_address: 172.30.9.3
-      lan: 
+      lan:
     depends_on:
       - cloudflared
 
 networks:
-  
+
   internal:
     ipam:
       config:
